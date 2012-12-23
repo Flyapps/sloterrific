@@ -461,6 +461,7 @@ co.doubleduck.Assets.loadAll = function() {
 	manifest[manifest.length] = "images/help/page_marker.png";
 	manifest[manifest.length] = "images/help/paytable.png";
 	manifest[manifest.length] = "images/help/paytable_slot.png";
+	manifest[manifest.length] = "images/help/rules.png";
 	manifest[manifest.length] = "images/slots/france/icons.png";
 	manifest[manifest.length] = "images/slots/france/background.png";
 	manifest[manifest.length] = "images/slots/france/border_top.png";
@@ -493,7 +494,7 @@ co.doubleduck.Assets.loadAll = function() {
 	co.doubleduck.Assets.loader().load();
 }
 co.doubleduck.Assets.audioLoaded = function(event) {
-	co.doubleduck.Assets._cacheData[event.src] = event;
+	co.doubleduck.Assets._cacheData[event.target.src] = event.target;
 }
 co.doubleduck.Assets.handleProgress = function(event) {
 	co.doubleduck.Assets.loaded = event.loaded;
@@ -1561,6 +1562,12 @@ co.doubleduck.PayTable = function(slotId) {
 	this.regY = this._tableBackground.image.height / 2;
 	this.scaleX = this.scaleY = co.doubleduck.Game.getScale();
 	this.initSlots();
+	this._rules = co.doubleduck.Assets.getImage("images/help/rules.png");
+	this._rules.regX = this._rules.image.width / 2;
+	this._rules.regY = this._rules.image.height / 2;
+	this._rules.x = this._tableBackground.image.width / 2;
+	this._rules.y = this._tableBackground.image.height * 0.4;
+	this._slots.addChild(this._rules);
 	this._slots.mask = this._mask;
 	this._currPage = 1;
 	this.enableSwipe();
@@ -1649,7 +1656,7 @@ co.doubleduck.PayTable.prototype = $extend(createjs.Container.prototype,{
 	,initSlots: function() {
 		this._slots = new createjs.Container();
 		var iconNum = co.doubleduck.DataLoader.getSlotMachineById(this._slotId).icons.length | 0;
-		this._pageNum = (iconNum / 6 | 0) + 1;
+		this._pageNum = (iconNum / 6 | 0) + 2;
 		var _g1 = 0, _g = this._pageNum;
 		while(_g1 < _g) {
 			var currPage = _g1++;
@@ -1665,7 +1672,7 @@ co.doubleduck.PayTable.prototype = $extend(createjs.Container.prototype,{
 						onlySlot.x = this._tableBackground.image.width * 0.20 + this._tableBackground.image.width * 0.3 * currCol;
 						onlySlot.y = this._tableBackground.image.height * 0.22 + this._tableBackground.image.height * 0.37 * currRow;
 						this._slots.addChild(onlySlot);
-						onlySlot.x += this._tableBackground.image.width * currPage;
+						onlySlot.x += this._tableBackground.image.width + this._tableBackground.image.width * currPage;
 					}
 				}
 			}
@@ -1732,6 +1739,11 @@ co.doubleduck.Persistence.initGameData = function() {
 	co.doubleduck.Persistence.initVar("money");
 	co.doubleduck.Persistence.initVar("coinTime");
 	if(co.doubleduck.Persistence.getXP() == 0) co.doubleduck.Persistence.setMoney(1000);
+	if(co.doubleduck.Persistence.getCoinTime() == 0) {
+		var now = new Date().getTime();
+		now -= 10000000;
+		co.doubleduck.Persistence.setCoinTime(now);
+	}
 }
 co.doubleduck.Persistence.setCoinTime = function(time) {
 	co.doubleduck.Persistence.setValue("coinTime","" + time);
@@ -1782,6 +1794,21 @@ co.doubleduck.Session = function(slotID) {
 	this._hud.onHelpOpened = $bind(this,this.handleHelpOpened);
 	this._dropper = new co.doubleduck.Dropper();
 	this.addChild(this._dropper);
+	var minMultiplier = 99999;
+	var maxMultiplier = 0;
+	var _g1 = 0, _g = this._slot.icons.length;
+	while(_g1 < _g) {
+		var currIcon = _g1++;
+		var icon = this._slot.icons[currIcon];
+		if(icon.id == "1") continue;
+		var numMultiplier = icon.multipliers.length | 0;
+		if((icon.multipliers[0] | 0) < minMultiplier) minMultiplier = icon.multipliers[0] | 0;
+		if((icon.multipliers[numMultiplier - 1] | 0) > maxMultiplier) maxMultiplier = icon.multipliers[numMultiplier - 1] | 0;
+	}
+	this._minBet = minMultiplier * this._betValues[0];
+	this._maxBet = maxMultiplier * this._betValues[this._betValues.length - 1];
+	var avgLine = this._lineOptions[Math.floor(this._lineOptions.length / 2)];
+	this._maxBet *= avgLine;
 };
 co.doubleduck.Session.__name__ = true;
 co.doubleduck.Session.__super__ = createjs.Container;
@@ -1897,9 +1924,9 @@ co.doubleduck.Session.prototype = $extend(createjs.Container.prototype,{
 			var multiplier = iconData.multipliers[multiplierIndex];
 			this.addMoney(this._betAmount * multiplier);
 			lastWin += this._betAmount * multiplier;
-			var numDropables = co.doubleduck.Utils.map(lastWin,5,5000,10,70);
+			var numDropables = co.doubleduck.Utils.map(lastWin,this._minBet,this._maxBet * co.doubleduck.Session.MAX_DROP_THRESH,8,50);
 			var time = co.doubleduck.Utils.map(numDropables,3,120,400,1800);
-			var soundSize = Math.floor(co.doubleduck.Utils.map(lastWin,5,5000,1,3.99)) | 0;
+			var soundSize = Math.floor(co.doubleduck.Utils.map(lastWin,this._minBet,this._maxBet * co.doubleduck.Session.MAX_DROP_THRESH,1,3.99)) | 0;
 			var effectName = "sound/win";
 			switch(soundSize) {
 			case 1:
@@ -2578,7 +2605,12 @@ co.doubleduck.SoundManager.setPersistedMute = function(mute) {
 }
 co.doubleduck.SoundManager.isSoundAvailable = function() {
 	var isFirefox = /Firefox/.test(navigator.userAgent);
-	return isFirefox;
+	var isChrome = /Chrome/.test(navigator.userAgent);
+	var isMobile = /Android/.test(navigator.userAgent);
+	var isAndroid = /Mobile/.test(navigator.userAgent);
+	if(isFirefox) return true;
+	if(isChrome && (!isAndroid && !isMobile)) return true;
+	return false;
 }
 co.doubleduck.SoundManager.mute = function() {
 	if(!co.doubleduck.SoundManager.available) return;
@@ -3753,6 +3785,7 @@ co.doubleduck.Game.HD = false;
 co.doubleduck.Game.DEBUG = false;
 co.doubleduck.Persistence.GAME_PREFIX = "SLO";
 co.doubleduck.Persistence.available = co.doubleduck.Persistence.localStorageSupported();
+co.doubleduck.Session.MAX_DROP_THRESH = 0.25;
 co.doubleduck.SlotIcon.ICONS_COUNT = 10;
 co.doubleduck.SlotIcon.ICON_SIZE = 75;
 co.doubleduck.SlotIcon.PREFIX = "icon";
