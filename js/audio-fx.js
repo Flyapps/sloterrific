@@ -38,6 +38,7 @@ AudioFX = function() {
     audio.autoplay = options.autoplay;
     audio.loop     = options.loop;
     audio.src      = src;
+	audio.preload  = "auto";
 
     return audio;
   }
