@@ -1220,7 +1220,12 @@ co.doubleduck.Game.getStage = function() {
 }
 co.doubleduck.Game.setScale = function() {
 	var regScale = co.doubleduck.Game._viewport.height / co.doubleduck.Game.MAX_HEIGHT;
-	if(co.doubleduck.Game._viewport.width >= co.doubleduck.Game._viewport.height) co.doubleduck.Game._scale = regScale; else if(co.doubleduck.Game.MAX_WIDTH * regScale < co.doubleduck.Game._viewport.width) co.doubleduck.Game._scale = co.doubleduck.Game._viewport.width / co.doubleduck.Game.MAX_WIDTH; else co.doubleduck.Game._scale = regScale;
+	var isFirefox = /Firefox/.test(navigator.userAgent);
+	var isAndroid = /Android/.test(navigator.userAgent);
+	if(viewporter.ACTIVE && isFirefox && isAndroid) {
+		co.doubleduck.Game._scale = co.doubleduck.Game._viewport.width / co.doubleduck.Game.MAX_WIDTH;
+		co.doubleduck.Game._viewport.height = co.doubleduck.Game.MAX_HEIGHT * co.doubleduck.Game._scale;
+	} else if(co.doubleduck.Game._viewport.width >= co.doubleduck.Game._viewport.height) co.doubleduck.Game._scale = regScale; else if(co.doubleduck.Game.MAX_WIDTH * regScale < co.doubleduck.Game._viewport.width) co.doubleduck.Game._scale = co.doubleduck.Game._viewport.width / co.doubleduck.Game.MAX_WIDTH; else co.doubleduck.Game._scale = regScale;
 }
 co.doubleduck.Game.prototype = {
 	handleSessionEnd: function() {
@@ -2451,6 +2456,7 @@ co.doubleduck.Session.prototype = $extend(createjs.Container.prototype,{
 		this.decreaseBetIfNeeded();
 		this.updateTotalBet();
 		this.updateDisplayedLines();
+		this.handleRollClick();
 	}
 	,handleLineAmountClick: function(e) {
 		var globalHalf = this._lineAmountBtn.localToGlobal(this._lineAmountBtn.image.width / 2,0);
