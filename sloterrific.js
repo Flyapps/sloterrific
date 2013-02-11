@@ -1220,12 +1220,7 @@ co.doubleduck.Game.getStage = function() {
 }
 co.doubleduck.Game.setScale = function() {
 	var regScale = co.doubleduck.Game._viewport.height / co.doubleduck.Game.MAX_HEIGHT;
-	var isFirefox = /Firefox/.test(navigator.userAgent);
-	var isAndroid = /Android/.test(navigator.userAgent);
-	if(viewporter.ACTIVE && isFirefox && isAndroid) {
-		co.doubleduck.Game._scale = co.doubleduck.Game._viewport.width / co.doubleduck.Game.MAX_WIDTH;
-		co.doubleduck.Game._viewport.height = co.doubleduck.Game.MAX_HEIGHT * co.doubleduck.Game._scale;
-	} else if(co.doubleduck.Game._viewport.width >= co.doubleduck.Game._viewport.height) co.doubleduck.Game._scale = regScale; else if(co.doubleduck.Game.MAX_WIDTH * regScale < co.doubleduck.Game._viewport.width) co.doubleduck.Game._scale = co.doubleduck.Game._viewport.width / co.doubleduck.Game.MAX_WIDTH; else co.doubleduck.Game._scale = regScale;
+	if(co.doubleduck.Game._viewport.width >= co.doubleduck.Game._viewport.height) co.doubleduck.Game._scale = regScale; else if(co.doubleduck.Game.MAX_WIDTH * regScale < co.doubleduck.Game._viewport.width) co.doubleduck.Game._scale = co.doubleduck.Game._viewport.width / co.doubleduck.Game.MAX_WIDTH; else co.doubleduck.Game._scale = regScale;
 }
 co.doubleduck.Game.prototype = {
 	handleSessionEnd: function() {
@@ -1280,9 +1275,11 @@ co.doubleduck.Game.prototype = {
 		co.doubleduck.Game._stage.canvas.width = screenW;
 		co.doubleduck.Game._stage.canvas.height = screenH;
 		if(!viewporter.isLandscape()) {
-			if(isFirefox && isAndroid) {
-				var viewportHeight = js.Lib.window.screen.height - 110;
-				screenH = Math.ceil(viewportHeight * (screenW / js.Lib.window.screen.width));
+			if(isFirefox) {
+				screenH = Math.floor(co.doubleduck.Main.getFFHeight());
+				var ffEstimate = Math.ceil((js.Lib.window.screen.height - 110) * (screenW / js.Lib.window.screen.width));
+				if(!isAndroid) ffEstimate = Math.ceil((js.Lib.window.screen.height - 30) * (screenW / js.Lib.window.screen.width));
+				if(ffEstimate < screenH) screenH = Math.floor(ffEstimate);
 			}
 			if(!(viewporter.ACTIVE && screenH < screenW)) {
 				co.doubleduck.Game._viewport.width = screenW;
@@ -1584,13 +1581,22 @@ co.doubleduck.Main = $hxClasses["co.doubleduck.Main"] = function() { }
 co.doubleduck.Main.__name__ = ["co","doubleduck","Main"];
 co.doubleduck.Main._stage = null;
 co.doubleduck.Main._game = null;
+co.doubleduck.Main._ffHeight = null;
 co.doubleduck.Main.main = function() {
+	co.doubleduck.Main.testFFHeight();
 	createjs.Ticker.useRAF = true;
 	createjs.Ticker.setFPS(60);
 	co.doubleduck.Main._stage = new createjs.Stage(js.Lib.document.getElementById("stageCanvas"));
 	co.doubleduck.Main._game = new co.doubleduck.Game(co.doubleduck.Main._stage);
 	createjs.Ticker.addListener(co.doubleduck.Main._stage);
 	createjs.Touch.enable(co.doubleduck.Main._stage,true,false);
+}
+co.doubleduck.Main.testFFHeight = function() {
+	var isApplicable = /Firefox/.test(navigator.userAgent);
+	if(isApplicable && viewporter.ACTIVE) co.doubleduck.Main._ffHeight = js.Lib.window.innerHeight;
+}
+co.doubleduck.Main.getFFHeight = function() {
+	return co.doubleduck.Main._ffHeight;
 }
 co.doubleduck.Menu = $hxClasses["co.doubleduck.Menu"] = function() {
 	this._isSweeping = false;
