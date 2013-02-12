@@ -824,7 +824,7 @@ co.doubleduck.Assets.getRawImage = function(uri) {
 		var bmp = new createjs.Bitmap(uri);
 		co.doubleduck.Assets._cacheData[uri] = bmp.image;
 		cache = bmp.image;
-		haxe.Log.trace("Requsted image that wasn't preloaded, consider preloading - \"" + uri + "\"",{ fileName : "Assets.hx", lineNumber : 263, className : "co.doubleduck.Assets", methodName : "getRawImage"});
+		null;
 	}
 	return cache;
 }
@@ -1731,7 +1731,6 @@ co.doubleduck.Menu.prototype = $extend(createjs.Container.prototype,{
 	,handlePlaySession: function() {
 		if(this._locksArray[this._chosenSlotId] == false) {
 			co.doubleduck.Game.hammer.onswipe = null;
-			haxe.Log.trace("game start",{ fileName : "Menu.hx", lineNumber : 498, className : "co.doubleduck.Menu", methodName : "handlePlaySession"});
 			this.onStart();
 		}
 	}
@@ -1917,7 +1916,7 @@ co.doubleduck.Menu.prototype = $extend(createjs.Container.prototype,{
 		if(nextCoinTime > 0) this.showNextCoinIn(); else this.showGetCoinsButton();
 	}
 	,handleMuteToggle: function(flag) {
-		haxe.Log.trace("Mute is: " + flag,{ fileName : "Menu.hx", lineNumber : 227, className : "co.doubleduck.Menu", methodName : "handleMuteToggle"});
+		null;
 	}
 	,_bgMusic: null
 	,_dropper: null
@@ -2179,7 +2178,6 @@ co.doubleduck.Persistence.initVar = function(initedVar) {
 	if(value == null) try {
 		co.doubleduck.Persistence.setValue(initedVar,"0");
 	} catch( e ) {
-		haxe.Log.trace("<<< could not use local storage for critical data !!!",{ fileName : "Persistence.hx", lineNumber : 111, className : "co.doubleduck.Persistence", methodName : "initVar"});
 		co.doubleduck.Persistence.available = false;
 	}
 }
@@ -3100,7 +3098,7 @@ co.doubleduck.audio.WebAudioAPI.saveBuffer = function(buffer,name) {
 	co.doubleduck.audio.WebAudioAPI._buffers[name] = buffer;
 }
 co.doubleduck.audio.WebAudioAPI.decodeError = function() {
-	haxe.Log.trace("decode error",{ fileName : "WebAudioAPI.hx", lineNumber : 64, className : "co.doubleduck.audio.WebAudioAPI", methodName : "decodeError"});
+	null;
 }
 co.doubleduck.audio.WebAudioAPI.prototype = {
 	setVolume: function(volume) {
