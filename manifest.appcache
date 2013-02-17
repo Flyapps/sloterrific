@@ -1,5 +1,10 @@
 CACHE MANIFEST
-# V1.215
+# V1.216
+
+NETWORK:
+*
+
+CACHE:
 createjs/easeljs-0.5.0.min.js
 createjs/preloadjs-0.2.0.min.js
 createjs/soundjs-0.3.0.min.js
