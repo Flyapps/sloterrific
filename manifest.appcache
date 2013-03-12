@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# V1.216
+# V1.217
 
 NETWORK:
 *
@@ -11,6 +11,7 @@ createjs/soundjs-0.3.0.min.js
 createjs/tweenjs-0.3.0.min.js
 data/CountryDB.js
 data/GameplayDB.js
+images/favicon.png
 images/fb-share.png
 images/ling.png
 images/loading_fill.png
